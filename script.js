@@ -12,8 +12,9 @@ function processFile() {
       content = content.replace(/правильных: \d+/u, 'правильных: ' + questionsCount);
       content = content.replace(/неправильных: \d+/u, 'неправильных: 0');
       content = content.replace(/без ответа: \d+/u, 'без ответа: 0');
-      const pointsCount = content.match(/баллов (\d+) из (\d+)/u)[2];
-      content = content.replace(/баллов (\d+) из (\d+) \(\d+%\)/u, `баллов ${pointsCount} из ${pointsCount} (100%)`);
+      const totalPoints = content.match(/баллов (\d+) из (\d+)/u)[2];
+      let points = totalPoints;
+      content = content.replace(/баллов (\d+) из (\d+) \(\d+%\)/u, `баллов ${totalPoints} из ${totalPoints} (100%)`);
 
       content = content.replace(
         /<tr bgcolor="#([^c]\w+)"><td>(\d+)\.<\/td><td>(\d+)<\/td><td>раздел: (\d+), сложность: (\d+)<\/td><td>([а-яА-Я\d\s,-]+)<\/td><td>([а-яА-Я\d\s,-]+)<\/td><\/tr>/gui,
@@ -23,44 +24,44 @@ function processFile() {
       content = content.replace(/<tr bgcolor="#[^c]\w+">/gui, '<tr bgcolor="#ccffcc">');
       // тут мы получили 100% результат
 
-      let rows = content.match(
-        /<tr bgcolor="#ccffcc"><td>\d+\.<\/td><td>\d+<\/td><td>раздел: \d+, сложность: \d+<\/td><td>\d+<\/td><td>\d+<\/td><\/tr>/gui,
-      )
+      if (document.getElementById("checkbox").checked) {
+        let rows = content.match(
+          /<tr bgcolor="#ccffcc"><td>\d+\.<\/td><td>\d+<\/td><td>раздел: \d+, сложность: \d+<\/td><td>\d+<\/td><td>\d+<\/td><\/tr>/gui,
+        )
 
-      rows = shuffle(rows);
+        rows = shuffle(rows);
 
-      const randomInt = getRandomIntInclusive(2, 6)
-      let badPoints = 0;
-      for (var i = 0; i < randomInt; i++) {
-        let row = rows[i];
-        // <tr bgcolor="#ccffcc"><td>22.
-        // let matches = rows[i].match(
-        //   /<tr bgcolor="#ccffcc"><td>(\d+)\.<\/td><td>(\d+)<\/td><td>раздел: (\d+), сложность: (\d+)<\/td><td>(\d+)<\/td><td>(\d+)<\/td><\/tr>/gui,
-        // )
-        let rowNumber = row.match(/<tr bgcolor="#ccffcc"><td>(\d+)\./ui)[1];
-        let answer = row.match(/<td>(\d+)<\/td><td>\d+<\/td><\/tr>/ui)[1];
-        let wrongAnswer = getRandomIntInclusive(1, 4)
-        while (wrongAnswer == answer) {
-          wrongAnswer = getRandomIntInclusive(1, 4)
+        const randomInt = getRandomIntInclusive(2, 6)
+        for (var i = 0; i < randomInt; i++) {
+          let row = rows[i];
+          // <tr bgcolor="#ccffcc"><td>22.
+          // 1 номер 2 сложность 3 ответ
+          let matches = rows[i].match(
+            /<tr bgcolor="#ccffcc"><td>(\d+)\.<\/td><td>\d+<\/td><td>раздел: \d+, сложность: (\d+)<\/td><td>(\d+)<\/td><td>\d+<\/td><\/tr>/ui,
+          );
+          // отнимаем баллы провелнных вопросов
+          points -= matches[2];
+
+          let rowNumber = matches[1]
+          let answer = matches[3]
+          let wrongAnswer = getRandomIntInclusive(1, 4)
+          while (wrongAnswer == answer) {
+            wrongAnswer = getRandomIntInclusive(1, 4)
+          }
+
+          const regex = new RegExp(`<tr bgcolor="#ccffcc"><td>${rowNumber}\.<\/td><td>(\\d+)<\/td><td>раздел: (\\d+), сложность: (\\d+)<\/td><td>(\\d+)<\/td><td>(\\d+)<\/td><\/tr>`, 'ui');
+          content = content.replace(regex,
+            `<tr bgcolor="#ffcccc"><td>${rowNumber}.</td><td>$1</td><td>раздел: $2, сложность: $3</td><td>${wrongAnswer}</td><td>$5</td></tr>`
+          );
         }
 
-        // console.log(row);
-        const regex = new RegExp(`<tr bgcolor="#ccffcc"><td>${rowNumber}\.<\/td><td>(\\d+)<\/td><td>раздел: (\\d+), сложность: (\\d+)<\/td><td>(\\d+)<\/td><td>(\\d+)<\/td><\/tr>`, 'ui');
-        // console.log(regex);
-        // console.log(content.search(regex));
-        content = content.replace(regex,
-          `<tr bgcolor="#ffcccc"><td>${rowNumber}.</td><td>$1</td><td>раздел: $2, сложность: $3</td><td>${wrongAnswer}</td><td>$5</td></tr>`
-        );
+        content = content.replace(/правильных: \d+/u, 'правильных: ' + (questionsCount - randomInt));
+        content = content.replace(/неправильных: \d+/u, 'неправильных: ' + randomInt);
+        content = content.replace(/без ответа: \d+/u, 'без ответа: 0');
+        const persentage = Math.floor((points/totalPoints)*100);
+        content = content.replace(/баллов (\d+) из (\d+) \(\d+%\)/u, `баллов ${(points)} из ${totalPoints} (${persentage}%)`);
       }
 
-      const questionsCount = content.match(/Всего вопросов: (\d+)/u)[1];
-      content = content.replace(/правильных: \d+/u, 'правильных: ' + questionsCount);
-      content = content.replace(/неправильных: \d+/u, 'неправильных: 0');
-      content = content.replace(/без ответа: \d+/u, 'без ответа: 0');
-      const pointsCount = content.match(/баллов (\d+) из (\d+)/u)[2];
-      content = content.replace(/баллов (\d+) из (\d+) \(\d+%\)/u, `баллов ${pointsCount} из ${pointsCount} (100%)`);
-
-      console.log(content);
 
       download("result.html", content);
     }

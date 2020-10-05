@@ -17,3 +17,7 @@ html, body {
     justify-content: center;
     overflow: auto;
 }
+
+.block {
+    width: 50%;
+}
