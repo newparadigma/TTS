@@ -14,38 +14,18 @@ function processFile() {
       content = content.replace(/без ответа: \d+/u, 'без ответа: 0');
       const pointsCount = content.match(/баллов (\d+) из (\d+)/u)[2];
       content = content.replace(/баллов (\d+) из (\d+) \(\d+%\)/u, `баллов ${pointsCount} из ${pointsCount} (100%)`);
-      // '<tr>                  <td>#</td>   <td>ID</td> <td>Раздел / Сложность</td>       <td>Ваш ответ</td>    <td>Правильный ответ</td></tr>'
-      const re = /<tr bgcolor="#([^c]\w+)"><td>(\d+)\.<\/td><td>(\d+)<\/td><td>раздел: (\d+), сложность: (\d+)<\/td><td>(\d+)<\/td><td>(\d+)<\/td><\/tr>/ug
-      content = content.replace(re, '<tr bgcolor="#$1"><td>$2.</td><td>$3</td><td>раздел: $4, сложность: $5</td><td>$6</td><td>$7</td></tr>');
 
-      content = content.replace('<tr bgcolor="()#[^c]\w+)">', 'ccffcc');
+      content = content.replace(
+        /<tr bgcolor="#([^c]\w+)"><td>(\d+)\.<\/td><td>(\d+)<\/td><td>раздел: (\d+), сложность: (\d+)<\/td><td>([а-яА-Я\d\s,-]+)<\/td><td>([а-яА-Я\d\s,-]+)<\/td><\/tr>/gui,
+        '<tr bgcolor="#$1"><td>$2.</td><td>$3</td><td>раздел: $4, сложность: $5</td><td>$7</td><td>$7</td></tr>'
+      );
 
-      var str = "I have a cat, a dog, and a goat.";
-      var mapObj = {cat:"dog",dog:"goat",goat:"cat"};
-      var re = new RegExp(Object.keys(mapObj).join("|"),"gi");
-      str = str.replace(re, function(matched){
-        return mapObj[matched];
-      });
-
-
-
-      console.log(content);
-      // Всего вопросов: 37
-      // правильных: 27
-      // неправильных: 10
-      // без ответа: 0.
-      // ИТОГО:
-      // баллов 44 из 61 (72%)
-      //
-      //
-      //
-      // // document.getElementById("fileContents").innerHTML = evt.target.result;
+      content = content.replace(/<tr bgcolor="#[^c]\w+">/gui, '<tr bgcolor="#ccffcc">');
       download("result.html", content);
     }
     reader.onerror = function (evt) {
-      console.log('error');
+      alert('error');
       console.log(evt);
-      // document.getElementById("fileContents").innerHTML = "error reading file";
     }
   }
 }
